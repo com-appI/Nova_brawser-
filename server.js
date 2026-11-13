@@ -9,9 +9,10 @@ const { URL } = require('url');
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 
-const SERPER_KEY_1 = process.env.SERPER_KEY || '34e2b98552e12dafa0dcf1eb81399f3cbc435019';
-const SERPER_KEY_2 = process.env.SERPER_KEY_2 || '1025273686ebb849b608e75816420fb6a99e7e78';
-const TAVILY_KEY   = process.env.TAVILY_KEY || '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';
+// Secrets must be configured in the hosting provider's Environment settings. Never hard-code API keys.
+const SERPER_KEY_1 = process.env.SERPER_KEY || '';
+const SERPER_KEY_2 = process.env.SERPER_KEY_2 || '';
+const TAVILY_KEY   = process.env.TAVILY_KEY || '';
 
 const CACHE_TTL = {
   news:      5  * 60 * 1000,
@@ -58,7 +59,8 @@ function checkBasicAuth(req) {
 function checkApiAuth(req) {
   const hasToken = !!process.env.API_TOKEN;
   const hasSite = !!(process.env.SITE_USER && process.env.SITE_PASS);
-  if (!hasToken && !hasSite) return true;
+  // Fail closed: API is unavailable until a server-side token or Basic Auth is configured.
+  if (!hasToken && !hasSite) return false;
   if (hasToken) {
     const t = req.headers['x-api-token'];
     if (t && t === process.env.API_TOKEN) return true;
@@ -615,17 +617,18 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/health') {
     return send(res, 200, {
       ok: true,
-      version: '3.1.0',
+      version: '3.2.0',
       engines: {
-        serper1: !!SERPER_KEY_1,
-        serper2: !!SERPER_KEY_2,
-        tavily:  !!TAVILY_KEY
+        serper: !!SERPER_KEY_1,
+        serperFallback: !!SERPER_KEY_2,
+        tavily: !!TAVILY_KEY
       },
       hasAuth: !!(process.env.SITE_USER && process.env.SITE_PASS),
       hasApiToken: !!process.env.API_TOKEN,
       chatclaud: process.env.CHATCLAUD_URL || 'https://chatclaud.onrender.com',
       cacheSize: cache.size,
       features: ['search', 'fetch-url', 'multi-fetch', 'summarize', 'related', 'trending', 'social-deep'],
+      internalSearch: true,
       time: new Date().toISOString()
     });
   }
@@ -834,9 +837,9 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log('Nova Browser v3.1 on port', PORT);
-  console.log('Serper1:', SERPER_KEY_1 ? 'OK' : 'MISSING');
-  console.log('Serper2:', SERPER_KEY_2 ? 'OK' : 'MISSING');
+  console.log('Nova Browser v3.2 on port', PORT);
+  console.log('Serper:', SERPER_KEY_1 ? 'OK' : 'MISSING');
+  console.log('Serper fallback:', SERPER_KEY_2 ? 'OK' : 'MISSING');
   console.log('Tavily: ', TAVILY_KEY ? 'OK' : 'MISSING');
   console.log('Auth:   ', process.env.SITE_USER ? 'ON' : 'OFF');
   console.log('Token:  ', process.env.API_TOKEN ? 'ON' : 'OFF');
