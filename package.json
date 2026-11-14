@@ -1,15 +1,12 @@
 {
-  "name": "chatclaud",
+  "name": "nova-browser",
   "version": "1.2.0",
-  "private": true,
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check sw.js && node scripts/check-inline.js",
-    "test": "node --test"
+    "check": "node --check server.js && node --check public/app.js"
   },
   "engines": {
     "node": ">=18"
-  },
-  "description": "ChatClaud single-file server (intelligence modules bundled into server.js)"
+  }
 }
